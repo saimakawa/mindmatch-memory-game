@@ -10,6 +10,11 @@ const ruleText = document.querySelector("#ruleText");
 const restartBtn = document.querySelector("#restart");
 const newRoundBtn = document.querySelector("#newRound");
 const exportBtn = document.querySelector("#export");
+const viewResultsBtn = document.querySelector("#viewResults");
+const resultsPanel = document.querySelector("#resultsPanel");
+const resultsBody = document.querySelector("#resultsBody");
+const resultsCount = document.querySelector("#resultsCount");
+const resultsEmpty = document.querySelector("#resultsEmpty");
 
 let deck = [];
 let firstCard = null;
@@ -85,10 +90,15 @@ function revealCard(index) {
     deck[firstCard.index].matched = true;
     deck[secondCard.index].matched = true;
     [firstCard.index, secondCard.index].forEach((matchedIndex) => {
-      const matchedButton = board.querySelector(`[data-index="${matchedIndex}"]`);
+      const matchedButton = board.querySelector(
+        `[data-index="${matchedIndex}"]`,
+      );
       matchedButton.className = "card matched";
       matchedButton.disabled = true;
-      matchedButton.setAttribute("aria-label", `Matched card: ${deck[matchedIndex].symbol}`);
+      matchedButton.setAttribute(
+        "aria-label",
+        `Matched card: ${deck[matchedIndex].symbol}`,
+      );
     });
     matchedPairs += 1;
     firstCard = null;
@@ -99,34 +109,78 @@ function revealCard(index) {
   } else {
     lockBoard = true;
     statusEl.textContent = "Not a match — remember the cards.";
-    mismatchTimeout = window.setTimeout(() => {
-      [firstCard.index, secondCard.index].forEach((hiddenIndex) => {
-        deck[hiddenIndex].revealed = false;
-        const hiddenButton = board.querySelector(`[data-index="${hiddenIndex}"]`);
-        hiddenButton.textContent = "✦";
-        hiddenButton.className = "card hidden-card";
-        hiddenButton.setAttribute("aria-label", `Hidden card ${hiddenIndex + 1}`);
-      });
-      firstCard = null;
-      secondCard = null;
-      lockBoard = false;
-      mismatchTimeout = null;
-      statusEl.textContent = "Choose two cards to find a pair.";
-    }, difficulty === "hard" ? 500 : 850);
+    mismatchTimeout = window.setTimeout(
+      () => {
+        [firstCard.index, secondCard.index].forEach((hiddenIndex) => {
+          deck[hiddenIndex].revealed = false;
+          const hiddenButton = board.querySelector(
+            `[data-index="${hiddenIndex}"]`,
+          );
+          hiddenButton.textContent = "✦";
+          hiddenButton.className = "card hidden-card";
+          hiddenButton.setAttribute(
+            "aria-label",
+            `Hidden card ${hiddenIndex + 1}`,
+          );
+        });
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+        mismatchTimeout = null;
+        statusEl.textContent = "Choose two cards to find a pair.";
+      },
+      difficulty === "hard" ? 500 : 850,
+    );
   }
+}
+
+function renderResults() {
+  resultsBody.replaceChildren();
+  const completedResults = results.filter((result) => result.completed);
+  resultsCount.textContent = `${completedResults.length} ${completedResults.length === 1 ? "round" : "rounds"}`;
+  resultsEmpty.hidden = completedResults.length > 0;
+
+  completedResults.forEach((result) => {
+    const row = document.createElement("tr");
+    const values = [
+      result.round,
+      String(result.difficulty || "easy").toUpperCase(),
+      result.moves,
+      formatTime(result.elapsedSeconds),
+      `${result.matchedPairs} / 8`,
+      String(result.nextDifficulty || "easy").toUpperCase(),
+    ];
+    values.forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = String(value);
+      row.append(cell);
+    });
+    resultsBody.append(row);
+  });
 }
 
 function finishRound() {
   roundOver = true;
   stopTimers();
-  elapsedSeconds = startedAt === null ? 0 : Math.floor((Date.now() - startedAt) / 1000);
-  const next = chooseNextDifficulty({ moves, elapsedSeconds, currentDifficulty: difficulty });
+  elapsedSeconds =
+    startedAt === null ? 0 : Math.floor((Date.now() - startedAt) / 1000);
+  const next = chooseNextDifficulty({
+    moves,
+    elapsedSeconds,
+    currentDifficulty: difficulty,
+  });
   results.push({
-    round: roundNumber, moves, elapsedSeconds, difficulty,
-    matchedPairs, completed: true, nextDifficulty: next.difficulty,
-    savedAt: new Date().toISOString()
+    round: roundNumber,
+    moves,
+    elapsedSeconds,
+    difficulty,
+    matchedPairs,
+    completed: true,
+    nextDifficulty: next.difficulty,
+    savedAt: new Date().toISOString(),
   });
   localStorage.setItem("mindmatch-results", JSON.stringify(results));
+  renderResults();
   ruleText.textContent = next.reason;
   statusEl.textContent = `You won in ${moves} moves and ${formatTime(elapsedSeconds)}! ${next.reason}`;
   difficulty = next.difficulty;
@@ -156,7 +210,9 @@ function startRound({ keepDifficulty = false, seed = null } = {}) {
 }
 
 function exportResults() {
-  const blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(results, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -165,7 +221,19 @@ function exportResults() {
   URL.revokeObjectURL(url);
 }
 
-restartBtn.addEventListener("click", () => startRound({ keepDifficulty: true }));
-newRoundBtn.addEventListener("click", () => startRound({ keepDifficulty: true }));
+restartBtn.addEventListener("click", () =>
+  startRound({ keepDifficulty: true }),
+);
+newRoundBtn.addEventListener("click", () =>
+  startRound({ keepDifficulty: true }),
+);
 exportBtn.addEventListener("click", exportResults);
+viewResultsBtn.addEventListener("click", () => {
+  const shouldShow = resultsPanel.hidden;
+  resultsPanel.hidden = !shouldShow;
+  viewResultsBtn.textContent = shouldShow ? "Hide results" : "View results";
+  viewResultsBtn.setAttribute("aria-expanded", String(shouldShow));
+  if (shouldShow) renderResults();
+});
+renderResults();
 startRound();

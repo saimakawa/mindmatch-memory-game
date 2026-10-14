@@ -44,9 +44,36 @@
           <p id="ruleText">Easy → Hard if you finish in 18 moves or fewer and within 90 seconds. Otherwise, stay Easy.</p>
         </div>
         <button class="button primary" id="newRound" type="button">Start new round</button>
-        <button class="button secondary full" id="export" type="button">Export session results</button>
+        <button class="button secondary full" id="viewResults" type="button" aria-expanded="false" aria-controls="resultsPanel">View results</button>
+        <button class="button secondary full" id="export" type="button">Export session results (JSON)</button>
         <p class="tiny">Results are anonymous and saved in this browser only.</p>
       </aside>
+    </section>
+
+    <section class="results-panel panel" id="resultsPanel" hidden aria-labelledby="resultsTitle">
+      <div class="results-heading">
+        <div>
+          <h2 id="resultsTitle">Your session results</h2>
+          <p class="results-subtitle">A readable summary of your completed rounds.</p>
+        </div>
+        <span class="results-count" id="resultsCount">0 rounds</span>
+      </div>
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th scope="col">Round</th>
+              <th scope="col">Level</th>
+              <th scope="col">Moves</th>
+              <th scope="col">Time</th>
+              <th scope="col">Pairs</th>
+              <th scope="col">Next level</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <p class="results-empty" id="resultsEmpty">Complete a round to see your results here.</p>
     </section>
     <footer>Built for the Cerevyn Solutions Software Developer Trainee assessment · PS09</footer>
   </main>
