@@ -1,0 +1,13 @@
+{
+  "name": "cerevyn-ps09-mindmatch",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Adaptive Memory Matching Game for Cerevyn Solutions PS09",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
